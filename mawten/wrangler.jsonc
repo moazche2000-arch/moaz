@@ -1,0 +1,28 @@
+{
+  "name": "mawten-wadi-colony",
+  "main": "worker.js",
+  "compatibility_date": "2026-10-14",
+  "workers_dev": true,
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "WORLD",
+        "class_name": "MawtenWorld"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "MawtenWorld"
+      ]
+    }
+  ],
+  "vars": {
+    "OWNER_EMAIL": "moazkhoulani@gmail.com"
+  },
+  "observability": {
+    "enabled": false
+  }
+}

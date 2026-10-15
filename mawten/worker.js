@@ -720,12 +720,12 @@ function createGameAPI(env,options={}){
   const worldStatement=w=>db.prepare('INSERT INTO world_documents(id,record) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET record=excluded.record').bind(WORLD.id,JSON.stringify(w));
   async function worldUsers(){const rows=await db.prepare('SELECT id,record,db_version FROM accounts').all();return new Map(rows.results.map(r=>[r.id,{...r,user:JSON.parse(r.record)}]))}
   function allianceOf(w,id){return w.alliances.find(a=>a.members.some(m=>m.id===id))}
-  function armyAvailable(w,u,m){const away=w.campaigns.find(q=>q.attacker===u.id)?.units||{};return Object.fromEntries(Object.entries(m.initFrontier().army).map(([k,n])=>[k,Math.max(0,n-(away[k]||0))]))}
+  function armyAvailable(w,u,m){const away=w.campaigns.find(q=>q.attacker===u.id)?.units||{};return Object.fromEntries(Object.entries(m.initFrontier().army).map(([k,n])=>[k,Math.max(0,n-(away[k]||0)-(m.initFrontier().mission?.units[k]||0))]))}
   async function worldService(id,body){
     const w=await worldLoad(),users=await worldUsers(),changed=new Set(),stamp=now(),random=options.random||(()=>randomBytes(4).readUInt32LE(0)/4294967296);
     const user=users.get(id)?.user;if(!user)throw fail(401,'سجّل الدخول.');
     // Battles resolve once from server deadlines, including when both players are offline.
-    for(const q of [...w.campaigns]){
+    for(const q of [...w.campaigns].sort((a,b)=>a.arrival-b.arrival)){
       if(q.arrival<=stamp&&!q.resolved){
         const au=users.get(q.attacker)?.user,du=users.get(q.target)?.user;
         if(au?.save&&du?.save){

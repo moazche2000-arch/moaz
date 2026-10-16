@@ -1,0 +1,38 @@
+name: Verify signed Play release
+on:
+  push:
+    paths:
+      - 'mawten/releases/Mawten-1.1.0.aab'
+      - '.github/workflows/mawten-play-verify.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Verify signed app bundle
+        run: |
+          mkdir -p verified
+          jarsigner -verify -verbose -certs mawten/releases/Mawten-1.1.0.aab > verified/jarsigner.txt
+          grep -q 'jar verified.' verified/jarsigner.txt
+          keytool -printcert -jarfile mawten/releases/Mawten-1.1.0.aab > verified/upload-certificate.txt
+          curl --fail --location --retry 3 https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar -o /tmp/bundletool.jar
+          java -jar /tmp/bundletool.jar validate --bundle=mawten/releases/Mawten-1.1.0.aab > verified/bundle-validation.txt
+          java -jar /tmp/bundletool.jar dump manifest --bundle=mawten/releases/Mawten-1.1.0.aab --module=base > verified/manifest.xml
+          grep -q 'versionCode="2"' verified/manifest.xml
+          grep -q 'targetSdkVersion="36"' verified/manifest.xml
+          grep -q 'com.android.vending.BILLING' verified/manifest.xml
+          grep -q 'MawtenPaymentActivity' verified/manifest.xml
+          cp mawten/releases/Mawten-1.1.0.aab verified/
+          sha256sum verified/Mawten-1.1.0.aab > verified/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mawten-signed-play-release
+          path: verified/
+          retention-days: 30

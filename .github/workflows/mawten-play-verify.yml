@@ -20,6 +20,7 @@ jobs:
         run: |
           mkdir -p verified
           jarsigner -verify -verbose -certs mawten/releases/Mawten-1.1.0.aab > verified/jarsigner.txt
+          cat verified/jarsigner.txt
           grep -q 'jar verified.' verified/jarsigner.txt
           keytool -printcert -jarfile mawten/releases/Mawten-1.1.0.aab > verified/upload-certificate.txt
           curl --fail --location --retry 3 https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar -o /tmp/bundletool.jar
@@ -32,6 +33,7 @@ jobs:
           cp mawten/releases/Mawten-1.1.0.aab verified/
           sha256sum verified/Mawten-1.1.0.aab > verified/SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: mawten-signed-play-release
           path: verified/

@@ -1,0 +1,40 @@
+name: Build Mawten Play Release
+on:
+  push:
+    paths:
+      - 'mawten/android/**'
+      - '.github/workflows/mawten-play-release.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+      - name: Build Play AAB and validate release
+        working-directory: mawten/android
+        run: |
+          gradle --no-daemon :app:bundleRelease :app:assembleDebug :app:lintRelease
+          gradle --no-daemon :app:dependencies --configuration releaseRuntimeClasspath > app/build/release-dependencies.txt
+      - name: Stage unsigned bundle for private local signing
+        run: |
+          mkdir -p play-build
+          cp mawten/android/app/build/outputs/bundle/release/app-release.aab play-build/Mawten-unsigned.aab
+          cp mawten/android/app/build/outputs/apk/debug/app-debug.apk play-build/Mawten-debug.apk
+          cp mawten/android/app/build/release-dependencies.txt play-build/
+          cp mawten/android/app/build/reports/lint-results-release.* play-build/ || true
+          sha256sum play-build/Mawten-unsigned.aab > play-build/build-sha256.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mawten-play-build
+          path: play-build
+          retention-days: 14

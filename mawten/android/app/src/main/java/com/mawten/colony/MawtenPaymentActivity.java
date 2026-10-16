@@ -1,5 +1,6 @@
 package com.mawten.colony;
 import android.app.Activity;
+import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
@@ -16,6 +17,8 @@ public final class MawtenPaymentActivity extends Activity implements PurchasesUp
  private static final String HOST="mawten-wadi-colony.moazkhoulani.workers.dev";
  private BillingClient billing;private String sku,account,checkout;private boolean finished;
  private boolean allowedOrigin(String origin){return origin!=null&&(origin.equals(HOST)||origin.equals("https://"+HOST)||origin.equals("https://"+HOST+"/"));}
+ // TokenStore inherits a BinderThread annotation; this implementation only reads thread-safe SharedPreferences.
+ @SuppressLint("WrongThread")
  @Override public void onCreate(Bundle state){super.onCreate(state);try{
   ComponentName caller=getCallingActivity();Token trusted=new SharedPreferencesTokenStore(this).load();
   if(caller==null||trusted==null||!trusted.matches(caller.getPackageName(),getPackageManager())||!allowedOrigin(getIntent().getStringExtra("topLevelOrigin"))||!allowedOrigin(getIntent().getStringExtra("paymentRequestOrigin"))){fail("Unverified checkout origin");return;}

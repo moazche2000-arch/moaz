@@ -1,0 +1,13 @@
+{
+  "package": "com.mawten.colony",
+  "version": "1.0.0",
+  "versionCode": 1,
+  "minSdk": 23,
+  "targetSdk": 35,
+  "bytes": 3676162,
+  "sha256": "a985408f635998b163a586b3616dddb119808f885673d8f3db6049300bccc4fe",
+  "certificateSha256": "D2:2F:48:A9:63:26:5E:2E:DF:B6:61:AC:C1:02:95:FF:F0:D4:B6:1B:3F:5E:7E:AC:AC:33:3D:D6:E3:95:26:F9",
+  "sourceCommit": "cfcfdebb17ad3dff8031660775ee91b132da236d",
+  "builtAt": "2026-10-16T09:59:14.557Z",
+  "signed": true
+}

@@ -1,0 +1,13 @@
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {randomBytes,createCipheriv,publicEncrypt,constants,createHash,X509Certificate} from 'node:crypto';
+const apk=await readFile('mawten/android/app/build/outputs/apk/release/app-release.apk');
+const key=await readFile(process.env.MAWTEN_SIGNING_STORE),cert=await readFile(process.env.RUNNER_TEMP+'/mawten-cert.der');
+const envelopeKey=randomBytes(32),iv=randomBytes(12),cipher=createCipheriv('aes-256-gcm',envelopeKey,iv);
+const plain=Buffer.from(JSON.stringify({keystore:key.toString('base64'),password:process.env.MAWTEN_SIGNING_PASSWORD,alias:'mawten',format:'PKCS12'}));
+const ciphertext=Buffer.concat([cipher.update(plain),cipher.final()]);plain.fill(0);
+const wrapped=publicEncrypt({key:await readFile('mawten/android/signing-backup-public.pem'),padding:constants.RSA_PKCS1_OAEP_PADDING,oaepHash:'sha256'},envelopeKey);envelopeKey.fill(0);
+const dir='mawten/android-dist';await mkdir(dir,{recursive:true});
+await writeFile(dir+'/Mawten-Online.apk',apk);await writeFile(dir+'/Mawten-Online.apk.b64',apk.toString('base64'));
+await writeFile(dir+'/signing-backup.encrypted.json',JSON.stringify({version:1,algorithm:'RSA-OAEP-SHA256+A256GCM',wrappedKey:wrapped.toString('base64'),iv:iv.toString('base64'),tag:cipher.getAuthTag().toString('base64'),ciphertext:ciphertext.toString('base64')},null,2));
+const report={package:'com.mawten.colony',version:'1.0.0',versionCode:1,minSdk:23,targetSdk:35,bytes:apk.length,sha256:createHash('sha256').update(apk).digest('hex'),certificateSha256:new X509Certificate(cert).fingerprint256,sourceCommit:process.env.GITHUB_SHA,builtAt:new Date().toISOString(),signed:true};
+await writeFile(dir+'/build-report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));

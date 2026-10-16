@@ -1,0 +1,9 @@
+plugins { id 'com.android.application' }
+android {
+ namespace 'com.mawten.colony'
+ compileSdk 35
+ defaultConfig { applicationId 'com.mawten.colony'; minSdk 23; targetSdk 35; versionCode 1; versionName '1.0.0' }
+ signingConfigs { release { if(System.getenv('MAWTEN_SIGNING_STORE')) { storeFile file(System.getenv('MAWTEN_SIGNING_STORE')); storePassword System.getenv('MAWTEN_SIGNING_PASSWORD'); keyAlias 'mawten'; keyPassword System.getenv('MAWTEN_SIGNING_PASSWORD') } } }
+ buildTypes { release { minifyEnabled false; signingConfig signingConfigs.release } }
+}
+dependencies { implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.6.2' }

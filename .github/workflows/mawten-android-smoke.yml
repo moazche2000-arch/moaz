@@ -1,0 +1,54 @@
+name: Verify Mawten Android launch
+on:
+  push:
+    paths:
+      - '.github/workflows/mawten-android-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Launch the actual signed APK on Android
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -memory 3072
+          script: |
+            adb install mawten/android-dist/Mawten-Online.apk
+            adb shell am start -W -a android.intent.action.VIEW -d https://mawten-wadi-colony.moazkhoulani.workers.dev/ -n com.mawten.colony/com.google.androidbrowserhelper.trusted.LauncherActivity
+            sleep 25
+            mkdir -p mawten/android-test
+            adb shell dumpsys activity activities > mawten/android-test/activities.txt
+            adb shell uiautomator dump /sdcard/mawten-ui.xml
+            adb pull /sdcard/mawten-ui.xml mawten/android-test/ui.xml
+            adb exec-out screencap -p > mawten/android-test/launch.png
+            adb logcat -d -s AndroidRuntime:E > mawten/android-test/crashes.txt
+            test -z "$(cat mawten/android-test/crashes.txt | grep -F 'FATAL EXCEPTION' || true)"
+            grep -E 'com.android.chrome|com.google.android.apps.chrome|org.chromium' mawten/android-test/activities.txt
+            echo 'Signed APK installed and browser activity launched on Android API35.' > mawten/android-test/result.txt
+      - name: Publish Android verification evidence
+        if: always()
+        run: |
+          if test -d mawten/android-test; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add mawten/android-test
+            git commit -m 'Record Android emulator launch verification'
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi

@@ -1,0 +1,5 @@
+{
+  "appId": "ca-app-pub-3940256099942544~3347511713",
+  "production": false,
+  "note": "Google official test App ID. Replace appId with owner AdMob App ID and production:true only after account/SSV setup. No real ad revenue yet."
+}

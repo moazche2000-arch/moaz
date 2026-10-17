@@ -1,9 +1,14 @@
 plugins { id 'com.android.application' }
+def admobSettings = new groovy.json.JsonSlurper().parse(rootProject.file('admob-config.json'))
+def admobAppId = admobSettings.appId
+if (!(admobAppId ==~ /ca-app-pub-[0-9]{16}~[0-9]{10}/)) throw new GradleException('Invalid AdMob App ID')
+def admobConfigured = admobSettings.production == true && !admobAppId.contains('3940256099942544')
 android {
  namespace 'com.mawten.colony'
  compileSdk 36
- defaultConfig { applicationId 'com.mawten.colony'; minSdk 23; targetSdk 36; versionCode 2; versionName '1.1.0' }
+ buildFeatures { buildConfig true }
+ defaultConfig { applicationId 'com.mawten.colony'; minSdk 23; targetSdk 36; versionCode 3; versionName '1.2.0'; resValue 'string', 'admob_app_id', admobAppId; buildConfigField 'boolean', 'ADMOB_CONFIGURED', admobConfigured.toString() }
  signingConfigs { release { if(System.getenv('MAWTEN_SIGNING_STORE')) { storeFile file(System.getenv('MAWTEN_SIGNING_STORE')); storePassword System.getenv('MAWTEN_SIGNING_PASSWORD'); keyAlias 'mawten'; keyPassword System.getenv('MAWTEN_SIGNING_PASSWORD') } } }
  buildTypes { release { minifyEnabled false; if(System.getenv('MAWTEN_SIGNING_STORE')) signingConfig signingConfigs.release } }
 }
-dependencies { implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.6.2'; implementation 'com.google.androidbrowserhelper:billing:1.2.0' }
+dependencies { implementation 'com.google.android.gms:play-services-ads:25.4.0'; implementation 'com.google.android.ump:user-messaging-platform:4.0.0'; implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.6.2'; implementation 'com.google.androidbrowserhelper:billing:1.2.0' }
